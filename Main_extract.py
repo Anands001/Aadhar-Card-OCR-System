@@ -13,7 +13,7 @@ import aadhaar_read
 import io
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-path = r'sample-aadhar3.jpg'
+path = r'aadhar-front.jpg'
 
 img = cv2.imread(path)
 img = cv2.resize(img, None, fx=2, fy=2,interpolation=cv2.INTER_CUBIC)
@@ -25,7 +25,10 @@ if var < 5:
     exit(1)
 
 filename = path
-text = pytesseract.image_to_string(Image.open(filename), lang = 'eng')
+text = pytesseract.image_to_string(Image.open(filename), lang = 'eng+tam')
+# Tamtext = pytesseract.image_to_string(Image.open(filename), lang = 'tam')
+#
+# print(Tamtext)
 
 text_output = open('output.txt', 'w', encoding='utf-8')
 text_output.write(text)

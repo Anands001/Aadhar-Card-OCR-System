@@ -32,8 +32,19 @@ def adhaar_read_data(text):
     print(text2)
     try:
 
+        name_pattern = re.compile(r'\b[A-Z][a-z]* [A-Z][a-z]*\b')
+
+        # Find all matches in the text
+        matches = name_pattern.findall(text)
+
+        # Extracted names
+        names = [match.strip() for match in matches]
+
+        # Print or use the extracted names as needed
+        print("Names:", names)
+
         # Cleaning first names
-        name = text0[0]
+        name = names.pop()
         name = name.rstrip()
         name = name.lstrip()
         name = name.replace("8", "B")
@@ -41,19 +52,36 @@ def adhaar_read_data(text):
         name = name.replace("6", "G")
         name = name.replace("1", "I")
         name = re.sub('[^a-zA-Z] +', ' ', name)
+        #
+        # name_pattern = re.compile(r'[A-Za-z ]+')
+        # names = [match.group(0).strip() for match in name_pattern.finditer(' '.join(text0))]
+        # print("Name :: ",names)
+
+
 
         # Cleaning DOB
-        dob = text0[1][-10:]
-        dob = dob.rstrip()
-        dob = dob.lstrip()
-        dob = dob.replace('l', '/')
-        dob = dob.replace('L', '/')
-        dob = dob.replace('I', '/')
-        dob = dob.replace('i', '/')
-        dob = dob.replace('|', '/')
-        dob = dob.replace('\"', '/1')
-        dob = dob.replace(":", "")
-        dob = dob.replace(" ", "")
+        # dob = text0[2][-10:]
+        # dob = dob.rstrip()
+        # dob = dob.lstrip()
+        # dob = dob.replace('l', '/')
+        # dob = dob.replace('L', '/')
+        # dob = dob.replace('I', '/')
+        # dob = dob.replace('i', '/')
+        # dob = dob.replace('|', '/')
+        # dob = dob.replace('\"', '/1')
+        # dob = dob.replace(":", "")
+        # dob = dob.replace(" ", "")
+
+        dob_pattern = re.compile(r'\b\d{1,2}/\d{1,2}/\d{4}\b')
+        dobs = [match.group(0) for match in dob_pattern.finditer(' '.join(text0))]
+        dobs.sort()
+        if len(dobs)>1:
+            issue_date = dobs[0]
+            print('issue date: ',issue_date)
+            dob = dobs[1]
+        else:
+            dob = dobs[0]
+        # print("Dob",dob)
 
         # Cleaning Adhaar number details
         aadhar_number = ''
