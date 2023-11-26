@@ -10,16 +10,19 @@ import ftfy
 import pan_read
 '''module which we made to read the text of the document'''
 import aadhaar_read
+import easy_extract
 import io
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-path = r'aadhar-front.jpg'
+path = r'sample-aadhar2.jpg'
 
 img = cv2.imread(path)
 img = cv2.resize(img, None, fx=2, fy=2,interpolation=cv2.INTER_CUBIC)
 img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 var = cv2.Laplacian(img, cv2.CV_64F).var()
-if var < 5:
+
+
+if var < 50:
     print("Image is Too Blurry....")
     k= input('Press Enter to Exit.')
     exit(1)
@@ -46,6 +49,24 @@ elif "male" in text.lower():
     data = aadhaar_read.adhaar_read_data(text)
 else:
     data = aadhaar_read.adhaar_read_data(text)
+
+if(all(data[key] is not None for key in data)):
+    pass
+else:
+    print("-------------Easy Ocr-------------------")
+    text = easy_extract.easy_read(filename)
+    # print(text)
+    text_output = open('output.txt', 'w', encoding='utf-8')
+    text_output.write(text)
+    text_output.close()
+
+    file = open('output.txt', 'r', encoding='utf-8')
+    text = file.read()
+
+    text = ftfy.fix_text(text)
+    text = ftfy.fix_encoding(text)
+    data = aadhaar_read.adhaar_read_data(text)
+    print("Text: ",text)
 
 print("Data :",data)
 try:
