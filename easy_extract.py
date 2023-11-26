@@ -27,4 +27,4 @@ def easy_read(path):
     # Optionally, you can also print other information such as bounding boxes
     for detection in results:
         print(f"Text: {detection[1]}, Confidence: {detection[2]}, Bounding Box: {detection[0]}")
-easy_read(r'sample-aadhar4.jpg')
+# easy_read(r'sample-aadhar4.jpg')
