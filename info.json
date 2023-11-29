@@ -1,7 +1,10 @@
 {
-    "Adhaar Number": "6092 2867 8789 ",
-    "Date of Birth": "31/03/1990",
+    "Adhaar Number": "8176 7259 2634",
+    "Date of Birth": "10/11/2002",
     "ID Type": "Adhaar",
-    "Name": "Amrut Arvind",
+    "Name": [
+        "Tamil",
+        "Nadu"
+    ],
     "Sex": "MALE"
 }

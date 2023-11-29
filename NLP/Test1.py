@@ -1,3 +1,8 @@
+import spacy
+
+english_nlp = spacy.load('en_core_web_sm')
+
+text = '''
 ¥ தமதரசாங்கம்‌.
 
 Government of India
@@ -38,3 +43,19 @@ sa
 MS help@uidai.gov.In www. uidai.gov.in
 
 ஜீ 1947
+'''
+
+text2 = '''
+ஸ்ரீராம்‌ மாமுண்டி
+Sriram Mamundi
+
+பிறந்த நாள்‌ / DOB: 11/04/1992
+ஆண்‌ | MALE
+
+8416 1590 3267
+'''
+
+spacy_parser = english_nlp(text2)
+
+for entity in spacy_parser.ents:
+    print(f'Found: {entity.text} of type: {entity.label_}')

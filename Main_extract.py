@@ -47,10 +47,15 @@ def main():
             exit(1)
 
         filename = path
-        text = pytesseract.image_to_string(Image.open(filename), lang='eng+tam')
+        img2str_config_name = "--psm 4 --oem 3"
+
+        text = pytesseract.image_to_string(img, lang='eng+tam')
+
         # Tamtext = pytesseract.image_to_string(Image.open(filename), lang = 'tam')
         #
         # print(Tamtext)
+        # print(Image.open(filename))
+        # cv2.imshow("Image",Image.open(filename))
 
         text_output = open('output.txt', 'w', encoding='utf-8')
         text_output.write(text)
@@ -68,24 +73,24 @@ def main():
             data = aadhaar_read.adhaar_read_data(text)
         else:
             data = aadhaar_read.adhaar_read_data(text)
-
-        if (all(data[key] is not None for key in data)):
-            pass
-        else:
-            print("-------------Easy Ocr-------------------")
-            text = easy_extract.easy_read(filename)
-            # print(text)
-            text_output = open('output.txt', 'w', encoding='utf-8')
-            text_output.write(text)
-            text_output.close()
-
-            file = open('output.txt', 'r', encoding='utf-8')
-            text = file.read()
-
-            text = ftfy.fix_text(text)
-            text = ftfy.fix_encoding(text)
-            data = aadhaar_read.adhaar_read_data(text)
-            print("Text: ", text)
+        print("Data : ",data)
+        # if all(data[key] is not None for key in data):
+        #     pass
+        # else:
+            # print("-------------Easy Ocr-------------------")
+            # text = easy_extract.easy_read(filename)
+            # # print(text)
+            # text_output = open('output.txt', 'w', encoding='utf-8')
+            # text_output.write(text)
+            # text_output.close()
+            #
+            # file = open('output.txt', 'r', encoding='utf-8')
+            # text = file.read()
+            #
+            # text = ftfy.fix_text(text)
+            # text = ftfy.fix_encoding(text)
+            # data = aadhaar_read.adhaar_read_data(text)
+            # print("Text: ", text)
 
         print("Data :", data)
         try:
