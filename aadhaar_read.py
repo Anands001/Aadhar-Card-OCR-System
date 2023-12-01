@@ -5,86 +5,63 @@ import langid
 import re
 
 import spacy
+def extract_and_clean_names(text):
+    # Extract names using regex
+    # name_pattern = re.compile(r'\b[A-Z][a-z]* [A-Z][a-z]*\b')
+    text = ''.join(text)
+    # print('Text :',text)
+    address_position = text.find("address".lower())
+    name_text = text[:address_position].strip();
+    name_pattern = re.compile(r'\b[A-Z][a-z]* [A-Z][a-z]*\b')
+    matches = name_pattern.findall(name_text)
+    # print("matches: ",matches)
+    names=list()
+    names = [match.strip() for match in matches]
+    # print("names:",names)
+    # Clean and modify names
+    for i in range(len(names)):
+        names[i] = names[i].rstrip()
+        names[i] = names[i].lstrip()
+        names[i] = names[i].replace("8", "B")
+        names[i] = names[i].replace("0", "D")
+        names[i] = names[i].replace("6", "G")
+        names[i] = names[i].replace("1", "I")
+        names[i] = re.sub('[^a-zA-Z]+', ' ', names[i])
 
+    common_strings = ['Unique Identification', 'Government', 'India', 'authority', 'aadhar','Issue Date']
 
-def adhaar_read_data1(text):
-    name = None
-    dob = None
-    adh = None
-    sex = None
-
-    try:
-        # Extract names
-        # name_pattern = re.compile(r'\b[A-Z][a-zA-Z\s.]+\b')
-        # name_pattern = re.compile(r"\b([A-ZÀ-ÿ][-,a-z. ']+[ ]*)+")
-        # names = name_pattern.findall(text)
-        # name = ' '.join(names).strip()
-
+    # Filter out names containing common strings
+    cleaned_names = [name for name in names if not any(common_str.lower() in name.lower() for common_str in common_strings)]
+    print('cleaned_names',cleaned_names)
+    # Join cleaned names into a single string
+    full_name = ''.join(cleaned_names)
+    if(cleaned_names.__len__() == 1):
+        return full_name
+    else:
+        text1 = ' '.join(cleaned_names)
+        # print("text1 : ",text1)
+        # Process with spaCy
         NER = spacy.load("en_core_web_sm")
+        name_entities = NER(text1)
+        print('name entities: ',name_entities)
+        for ens in name_entities.ents:
+            print(ens.text,' - ',ens.label_)
+        # Extract names from spaCy entities
+        extracted_names = [ent.text for ent in name_entities.ents if ent.label_ == "PERSON"]
+        # extracted_names = text1
+        print("Extracted names:",extracted_names)
+        state_names = ['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
+                                 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh',
+                                 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+                                 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh',
+                                 'Uttarakhand', 'West Bengal', 'Andaman', 'Nicobar', 'Chandigarh', 'Dadra', 'Nagar Haveli',
+                                 'Daman', 'Diu', 'Lakshadweep', 'Delhi', 'Puducherry', 'Jammu', 'Kashmir', 'Ladakh']
 
-        # Extracting entities using spaCy NER
-        doc = NER(text)
-        regex_name = []
+        cleaned_names = ' '.join([word for word in extracted_names if word not in state_names])
+        full_name = cleaned_names
+        return full_name
 
-        # Extracting names using spaCy NER
-        # for ent in doc.ents:
-        #     if ent.label_ in ["PERSON", "NOUN", "PROPN"]:
-        #         regex_name.extend(re.findall("[A-Z][a-z]+", ent.text))
-        #
-        # # If no names found, use a fallback regex on the entire OCR result
-        # if not regex_name:
-        #     regex_name.extend(re.findall("[A-Z][a-z]+", text))
-        #
-        # # Extracted names
-        # print("Extracted Names:", regex_name)
-        img2str_config_name = "--psm 4 --oem 3"
-        res_string_name = text
-        name = NER(res_string_name)
-
-        for word in name.ents:
-            if word.label_ == "PERSON":
-                regex_name = re.findall("[A-Z][a-z]+", word.text)
-        if not regex_name:
-            regex_name = re.findall("[A-Z][a-z]+", res_string_name)
-        print(res_string_name)
-        print(regex_name)
-        name = regex_name
-
-        # Extract date of birth
-        dob_pattern = re.compile(r'\b\d{1,2}/\d{1,2}/\d{4}\b')
-        dob = dob_pattern.search(text).group(0)
-
-        # Extract Aadhaar number
-        adh_pattern = re.compile(r'\b\d{4}\s\d{4}\s\d{4}\b')
-        adh = adh_pattern.search(text).group(0)
-
-        # Determine gender
-        sex_pattern = re.compile(r'\bMale\b|\bFemale\b')
-        sex_match = sex_pattern.search(text)
-        sex = "MALE" if (sex_match and "Male" in sex_match.group(0)) else "FEMALE"
-
-        # Post-process the name to remove unwanted information
-        if "AADHAAR" in name:
-            name = name.split("AADHAAR")[0].strip()
-
-    except Exception as e:
-        print(f"Error: {e}")
-
-    data = {
-        'Name': name,
-        'Date of Birth': dob,
-        'Adhaar Number': adh,
-        'Sex': sex,
-        'ID Type': 'Adhaar'
-    }
-
-    print("data: ",data)
-
-    return data
-
-
-
-def adhaar_read_data(text):
+def adhaar_read_data(text,img):
     res = text.split()
     name = None
     dob = None
@@ -110,50 +87,20 @@ def adhaar_read_data(text):
 
     text1 = list(filter(None, text1))
     text0 = text1[:]
-    print(text0)
-    print(text1)
-    print(text2)
+    # print('text0 ',text0)
+    # print('text1 ',text1)
+    # print('text2 ',text2)
     try:
+        extracted_names = extract_and_clean_names(text)
 
-        name_pattern = re.compile(r'\b[A-Z][a-z]* [A-Z][a-z]*\b')
-
-        # Find all matches in the text
-        matches = name_pattern.findall(text)
-
-        # Extracted names
-        names = [match.strip() for match in matches]
-
-        # Print or use the extracted names as needed
-
-        # Cleaning first names
-        # name = names.pop()
-        for name in names:
-            name = name.rstrip()
-            name = name.lstrip()
-            name = name.replace("8", "B")
-            name = name.replace("0", "D")
-            name = name.replace("6", "G")
-            name = name.replace("1", "I")
-            name = re.sub('[^a-zA-Z] +', ' ', name)
-
-        text1 = ' '.join(names)
-        NER = spacy.load("en_core_web_sm")
-
-        res_string_name = text1
-        name = NER(res_string_name)
-
-        for word in name.ents:
-            if word.label_ == "PERSON":
-                regex_name = re.findall("[A-Z][a-z]+", word.text)
-        if not regex_name:
-            regex_name = re.findall("[A-Z][a-z]+", res_string_name)
-        print(res_string_name)
-        print(regex_name)
-        name = regex_name
-        print("Names:", names)
-
-
-
+        # print("Cleaned Names:", cleaned_names)
+        print("Extracted Names:", extracted_names)
+        name = extracted_names
+        # print("Names:", names)
+    except Exception as e:
+        print("Exception occured while extracting name")
+        print(e)
+    try:
 
         # Cleaning DOB
         # dob = text0[2][-10:]
@@ -188,8 +135,12 @@ def adhaar_read_data(text):
         #     print("Aadhar number is :" + aadhar_number)
         # else:
         #     print("Aadhar number not read")
-        adh_pattern = re.compile(r'\b\d{4}\s\d{4}\s\d{4}\b')
+        adh_pattern = re.compile(r'\d\d\d\d \d\d\d\d \d\d\d\d')
         adh = adh_pattern.search(text).group(0)
+        get_address1(text)
+        if(text.find("address".lower()) ):
+            print("Address : ",get_address(img,True))
+
 
 
 
@@ -204,6 +155,1369 @@ def adhaar_read_data(text):
     data['ID Type'] = "Adhaar"
     return data
 
+
+def get_address1(text):
+    # print("Address method called")
+    address_position = text.lower().find("address".lower())
+    # print(address_position)
+    addr_text = text[address_position:].strip()
+    print("Address text: ",addr_text)
+    state_names = ['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
+                   'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh',
+                   'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+                   'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh',
+                   'Uttarakhand', 'West Bengal', 'Andaman', 'Nicobar', 'Chandigarh', 'Dadra', 'Nagar Haveli',
+                   'Daman', 'Diu', 'Lakshadweep', 'Delhi', 'Puducherry', 'Jammu', 'Kashmir', 'Ladakh']
+
+    indian_cities = {
+  "Andaman and Nicobar Islands": [
+    "Port Blair"
+  ],
+  "Haryana": [
+    "Faridabad",
+    "Gurgaon",
+    "Hisar",
+    "Rohtak",
+    "Panipat",
+    "Karnal",
+    "Sonipat",
+    "Yamunanagar",
+    "Panchkula",
+    "Bhiwani",
+    "Bahadurgarh",
+    "Jind",
+    "Sirsa",
+    "Thanesar",
+    "Kaithal",
+    "Palwal",
+    "Rewari",
+    "Hansi",
+    "Narnaul",
+    "Fatehabad",
+    "Gohana",
+    "Tohana",
+    "Narwana",
+    "Mandi Dabwali",
+    "Charkhi Dadri",
+    "Shahbad",
+    "Pehowa",
+    "Samalkha",
+    "Pinjore",
+    "Ladwa",
+    "Sohna",
+    "Safidon",
+    "Taraori",
+    "Mahendragarh",
+    "Ratia",
+    "Rania",
+    "Sarsod"
+  ],
+  "Tamil Nadu": [
+    "Chennai",
+    "Coimbatore",
+    "Madurai",
+    "Tiruchirappalli",
+    "Salem",
+    "Tirunelveli",
+    "Tiruppur",
+    "Ranipet",
+    "Nagercoil",
+    "Thanjavur",
+    "Vellore",
+    "Kancheepuram",
+    "Erode",
+    "Tiruvannamalai",
+    "Pollachi",
+    "Rajapalayam",
+    "Sivakasi",
+    "Pudukkottai",
+    "Neyveli (TS)",
+    "Nagapattinam",
+    "Viluppuram",
+    "Tiruchengode",
+    "Vaniyambadi",
+    "Theni Allinagaram",
+    "Udhagamandalam",
+    "Aruppukkottai",
+    "Paramakudi",
+    "Arakkonam",
+    "Virudhachalam",
+    "Srivilliputhur",
+    "Tindivanam",
+    "Virudhunagar",
+    "Karur",
+    "Valparai",
+    "Sankarankovil",
+    "Tenkasi",
+    "Palani",
+    "Pattukkottai",
+    "Tirupathur",
+    "Ramanathapuram",
+    "Udumalaipettai",
+    "Gobichettipalayam",
+    "Thiruvarur",
+    "Thiruvallur",
+    "Panruti",
+    "Namakkal",
+    "Thirumangalam",
+    "Vikramasingapuram",
+    "Nellikuppam",
+    "Rasipuram",
+    "Tiruttani",
+    "Nandivaram-Guduvancheri",
+    "Periyakulam",
+    "Pernampattu",
+    "Vellakoil",
+    "Sivaganga",
+    "Vadalur",
+    "Rameshwaram",
+    "Tiruvethipuram",
+    "Perambalur",
+    "Usilampatti",
+    "Vedaranyam",
+    "Sathyamangalam",
+    "Puliyankudi",
+    "Nanjikottai",
+    "Thuraiyur",
+    "Sirkali",
+    "Tiruchendur",
+    "Periyasemur",
+    "Sattur",
+    "Vandavasi",
+    "Tharamangalam",
+    "Tirukkoyilur",
+    "Oddanchatram",
+    "Palladam",
+    "Vadakkuvalliyur",
+    "Tirukalukundram",
+    "Uthamapalayam",
+    "Surandai",
+    "Sankari",
+    "Shenkottai",
+    "Vadipatti",
+    "Sholingur",
+    "Tirupathur",
+    "Manachanallur",
+    "Viswanatham",
+    "Polur",
+    "Panagudi",
+    "Uthiramerur",
+    "Thiruthuraipoondi",
+    "Pallapatti",
+    "Ponneri",
+    "Lalgudi",
+    "Natham",
+    "Unnamalaikadai",
+    "P.N.Patti",
+    "Tharangambadi",
+    "Tittakudi",
+    "Pacode",
+    "O' Valley",
+    "Suriyampalayam",
+    "Sholavandan",
+    "Thammampatti",
+    "Namagiripettai",
+    "Peravurani",
+    "Parangipettai",
+    "Pudupattinam",
+    "Pallikonda",
+    "Sivagiri",
+    "Punjaipugalur",
+    "Padmanabhapuram",
+    "Thirupuvanam"
+  ],
+  "Madhya Pradesh": [
+    "Indore",
+    "Bhopal",
+    "Jabalpur",
+    "Gwalior",
+    "Ujjain",
+    "Sagar",
+    "Ratlam",
+    "Satna",
+    "Murwara (Katni)",
+    "Morena",
+    "Singrauli",
+    "Rewa",
+    "Vidisha",
+    "Ganjbasoda",
+    "Shivpuri",
+    "Mandsaur",
+    "Neemuch",
+    "Nagda",
+    "Itarsi",
+    "Sarni",
+    "Sehore",
+    "Mhow Cantonment",
+    "Seoni",
+    "Balaghat",
+    "Ashok Nagar",
+    "Tikamgarh",
+    "Shahdol",
+    "Pithampur",
+    "Alirajpur",
+    "Mandla",
+    "Sheopur",
+    "Shajapur",
+    "Panna",
+    "Raghogarh-Vijaypur",
+    "Sendhwa",
+    "Sidhi",
+    "Pipariya",
+    "Shujalpur",
+    "Sironj",
+    "Pandhurna",
+    "Nowgong",
+    "Mandideep",
+    "Sihora",
+    "Raisen",
+    "Lahar",
+    "Maihar",
+    "Sanawad",
+    "Sabalgarh",
+    "Umaria",
+    "Porsa",
+    "Narsinghgarh",
+    "Malaj Khand",
+    "Sarangpur",
+    "Mundi",
+    "Nepanagar",
+    "Pasan",
+    "Mahidpur",
+    "Seoni-Malwa",
+    "Rehli",
+    "Manawar",
+    "Rahatgarh",
+    "Panagar",
+    "Wara Seoni",
+    "Tarana",
+    "Sausar",
+    "Rajgarh",
+    "Niwari",
+    "Mauganj",
+    "Manasa",
+    "Nainpur",
+    "Prithvipur",
+    "Sohagpur",
+    "Nowrozabad (Khodargama)",
+    "Shamgarh",
+    "Maharajpur",
+    "Multai",
+    "Pali",
+    "Pachore",
+    "Rau",
+    "Mhowgaon",
+    "Vijaypur",
+    "Narsinghgarh"
+  ],
+  "Jharkhand": [
+    "Dhanbad",
+    "Ranchi",
+    "Jamshedpur",
+    "Bokaro Steel City",
+    "Deoghar",
+    "Phusro",
+    "Adityapur",
+    "Hazaribag",
+    "Giridih",
+    "Ramgarh",
+    "Jhumri Tilaiya",
+    "Saunda",
+    "Sahibganj",
+    "Medininagar (Daltonganj)",
+    "Chaibasa",
+    "Chatra",
+    "Gumia",
+    "Dumka",
+    "Madhupur",
+    "Chirkunda",
+    "Pakaur",
+    "Simdega",
+    "Musabani",
+    "Mihijam",
+    "Patratu",
+    "Lohardaga",
+    "Tenu dam-cum-Kathhara"
+  ],
+  "Mizoram": [
+    "Aizawl",
+    "Lunglei",
+    "Saiha"
+  ],
+  "Nagaland": [
+    "Dimapur",
+    "Kohima",
+    "Zunheboto",
+    "Tuensang",
+    "Wokha",
+    "Mokokchung"
+  ],
+  "Himachal Pradesh": [
+    "Shimla",
+    "Mandi",
+    "Solan",
+    "Nahan",
+    "Sundarnagar",
+    "Palampur",
+    "Kullu"
+  ],
+  "Tripura": [
+    "Agartala",
+    "Udaipur",
+    "Dharmanagar",
+    "Pratapgarh",
+    "Kailasahar",
+    "Belonia",
+    "Khowai"
+  ],
+  "Andhra Pradesh": [
+    "Visakhapatnam",
+    "Vijayawada",
+    "Guntur",
+    "Nellore",
+    "Kurnool",
+    "Rajahmundry",
+    "Kakinada",
+    "Tirupati",
+    "Anantapur",
+    "Kadapa",
+    "Vizianagaram",
+    "Eluru",
+    "Ongole",
+    "Nandyal",
+    "Machilipatnam",
+    "Adoni",
+    "Tenali",
+    "Chittoor",
+    "Hindupur",
+    "Proddatur",
+    "Bhimavaram",
+    "Madanapalle",
+    "Guntakal",
+    "Dharmavaram",
+    "Gudivada",
+    "Srikakulam",
+    "Narasaraopet",
+    "Rajampet",
+    "Tadpatri",
+    "Tadepalligudem",
+    "Chilakaluripet",
+    "Yemmiganur",
+    "Kadiri",
+    "Chirala",
+    "Anakapalle",
+    "Kavali",
+    "Palacole",
+    "Sullurpeta",
+    "Tanuku",
+    "Rayachoti",
+    "Srikalahasti",
+    "Bapatla",
+    "Naidupet",
+    "Nagari",
+    "Gudur",
+    "Vinukonda",
+    "Narasapuram",
+    "Nuzvid",
+    "Markapur",
+    "Ponnur",
+    "Kandukur",
+    "Bobbili",
+    "Rayadurg",
+    "Samalkot",
+    "Jaggaiahpet",
+    "Tuni",
+    "Amalapuram",
+    "Bheemunipatnam",
+    "Venkatagiri",
+    "Sattenapalle",
+    "Pithapuram",
+    "Palasa Kasibugga",
+    "Parvathipuram",
+    "Macherla",
+    "Gooty",
+    "Salur",
+    "Mandapeta",
+    "Jammalamadugu",
+    "Peddapuram",
+    "Punganur",
+    "Nidadavole",
+    "Repalle",
+    "Ramachandrapuram",
+    "Kovvur",
+    "Tiruvuru",
+    "Uravakonda",
+    "Narsipatnam",
+    "Yerraguntla",
+    "Pedana",
+    "Puttur",
+    "Renigunta",
+    "Rajam",
+    "Srisailam Project (Right Flank Colony) Township"
+  ],
+  "Punjab": [
+    "Ludhiana",
+    "Patiala",
+    "Amritsar",
+    "Jalandhar",
+    "Bathinda",
+    "Pathankot",
+    "Hoshiarpur",
+    "Batala",
+    "Moga",
+    "Malerkotla",
+    "Khanna",
+    "Mohali",
+    "Barnala",
+    "Firozpur",
+    "Phagwara",
+    "Kapurthala",
+    "Zirakpur",
+    "Kot Kapura",
+    "Faridkot",
+    "Muktsar",
+    "Rajpura",
+    "Sangrur",
+    "Fazilka",
+    "Gurdaspur",
+    "Kharar",
+    "Gobindgarh",
+    "Mansa",
+    "Malout",
+    "Nabha",
+    "Tarn Taran",
+    "Jagraon",
+    "Sunam",
+    "Dhuri",
+    "Firozpur Cantt.",
+    "Sirhind Fatehgarh Sahib",
+    "Rupnagar",
+    "Jalandhar Cantt.",
+    "Samana",
+    "Nawanshahr",
+    "Rampura Phul",
+    "Nangal",
+    "Nakodar",
+    "Zira",
+    "Patti",
+    "Raikot",
+    "Longowal",
+    "Urmar Tanda",
+    "Morinda, India",
+    "Phillaur",
+    "Pattran",
+    "Qadian",
+    "Sujanpur",
+    "Mukerian",
+    "Talwara"
+  ],
+  "Chandigarh": [
+    "Chandigarh"
+  ],
+  "Rajasthan": [
+    "Jaipur",
+    "Jodhpur",
+    "Bikaner",
+    "Udaipur",
+    "Ajmer",
+    "Bhilwara",
+    "Alwar",
+    "Bharatpur",
+    "Pali",
+    "Barmer",
+    "Sikar",
+    "Tonk",
+    "Sadulpur",
+    "Sawai Madhopur",
+    "Nagaur",
+    "Makrana",
+    "Sujangarh",
+    "Sardarshahar",
+    "Ladnu",
+    "Ratangarh",
+    "Nokha",
+    "Nimbahera",
+    "Suratgarh",
+    "Rajsamand",
+    "Lachhmangarh",
+    "Rajgarh (Churu)",
+    "Nasirabad",
+    "Nohar",
+    "Phalodi",
+    "Nathdwara",
+    "Pilani",
+    "Merta City",
+    "Sojat",
+    "Neem-Ka-Thana",
+    "Sirohi",
+    "Pratapgarh",
+    "Rawatbhata",
+    "Sangaria",
+    "Lalsot",
+    "Pilibanga",
+    "Pipar City",
+    "Taranagar",
+    "Vijainagar, Ajmer",
+    "Sumerpur",
+    "Sagwara",
+    "Ramganj Mandi",
+    "Lakheri",
+    "Udaipurwati",
+    "Losal",
+    "Sri Madhopur",
+    "Ramngarh",
+    "Rawatsar",
+    "Rajakhera",
+    "Shahpura",
+    "Shahpura",
+    "Raisinghnagar",
+    "Malpura",
+    "Nadbai",
+    "Sanchore",
+    "Nagar",
+    "Rajgarh (Alwar)",
+    "Sheoganj",
+    "Sadri",
+    "Todaraisingh",
+    "Todabhim",
+    "Reengus",
+    "Rajaldesar",
+    "Sadulshahar",
+    "Sambhar",
+    "Prantij",
+    "Mount Abu",
+    "Mangrol",
+    "Phulera",
+    "Mandawa",
+    "Pindwara",
+    "Mandalgarh",
+    "Takhatgarh"
+  ],
+  "Assam": [
+    "Guwahati",
+    "Silchar",
+    "Dibrugarh",
+    "Nagaon",
+    "Tinsukia",
+    "Jorhat",
+    "Bongaigaon City",
+    "Dhubri",
+    "Diphu",
+    "North Lakhimpur",
+    "Tezpur",
+    "Karimganj",
+    "Sibsagar",
+    "Goalpara",
+    "Barpeta",
+    "Lanka",
+    "Lumding",
+    "Mankachar",
+    "Nalbari",
+    "Rangia",
+    "Margherita",
+    "Mangaldoi",
+    "Silapathar",
+    "Mariani",
+    "Marigaon"
+  ],
+  "Odisha": [
+    "Bhubaneswar",
+    "Cuttack",
+    "Raurkela",
+    "Brahmapur",
+    "Sambalpur",
+    "Puri",
+    "Baleshwar Town",
+    "Baripada Town",
+    "Bhadrak",
+    "Balangir",
+    "Jharsuguda",
+    "Bargarh",
+    "Paradip",
+    "Bhawanipatna",
+    "Dhenkanal",
+    "Barbil",
+    "Kendujhar",
+    "Sunabeda",
+    "Rayagada",
+    "Jatani",
+    "Byasanagar",
+    "Kendrapara",
+    "Rajagangapur",
+    "Parlakhemundi",
+    "Talcher",
+    "Sundargarh",
+    "Phulabani",
+    "Pattamundai",
+    "Titlagarh",
+    "Nabarangapur",
+    "Soro",
+    "Malkangiri",
+    "Rairangpur",
+    "Tarbha"
+  ],
+  "Chhattisgarh": [
+    "Raipur",
+    "Bhilai Nagar",
+    "Korba",
+    "Bilaspur",
+    "Durg",
+    "Rajnandgaon",
+    "Jagdalpur",
+    "Raigarh",
+    "Ambikapur",
+    "Mahasamund",
+    "Dhamtari",
+    "Chirmiri",
+    "Bhatapara",
+    "Dalli-Rajhara",
+    "Naila Janjgir",
+    "Tilda Newra",
+    "Mungeli",
+    "Manendragarh",
+    "Sakti"
+  ],
+  "Jammu and Kashmir": [
+    "Srinagar",
+    "Jammu",
+    "Baramula",
+    "Anantnag",
+    "Sopore",
+    "KathUrban Agglomeration",
+    "Rajauri",
+    "Punch",
+    "Udhampur"
+  ],
+  "Karnataka": [
+    "Bengaluru",
+    "Hubli-Dharwad",
+    "Belagavi",
+    "Mangaluru",
+    "Davanagere",
+    "Ballari",
+    "Mysore",
+    "Tumkur",
+    "Shivamogga",
+    "Raayachuru",
+    "Robertson Pet",
+    "Kolar",
+    "Mandya",
+    "Udupi",
+    "Chikkamagaluru",
+    "Karwar",
+    "Ranebennuru",
+    "Ranibennur",
+    "Ramanagaram",
+    "Gokak",
+    "Yadgir",
+    "Rabkavi Banhatti",
+    "Shahabad",
+    "Sirsi",
+    "Sindhnur",
+    "Tiptur",
+    "Arsikere",
+    "Nanjangud",
+    "Sagara",
+    "Sira",
+    "Puttur",
+    "Athni",
+    "Mulbagal",
+    "Surapura",
+    "Siruguppa",
+    "Mudhol",
+    "Sidlaghatta",
+    "Shahpur",
+    "Saundatti-Yellamma",
+    "Wadi",
+    "Manvi",
+    "Nelamangala",
+    "Lakshmeshwar",
+    "Ramdurg",
+    "Nargund",
+    "Tarikere",
+    "Malavalli",
+    "Savanur",
+    "Lingsugur",
+    "Vijayapura",
+    "Sankeshwara",
+    "Madikeri",
+    "Talikota",
+    "Sedam",
+    "Shikaripur",
+    "Mahalingapura",
+    "Mudalagi",
+    "Muddebihal",
+    "Pavagada",
+    "Malur",
+    "Sindhagi",
+    "Sanduru",
+    "Afzalpur",
+    "Maddur",
+    "Madhugiri",
+    "Tekkalakote",
+    "Terdal",
+    "Mudabidri",
+    "Magadi",
+    "Navalgund",
+    "Shiggaon",
+    "Shrirangapattana",
+    "Sindagi",
+    "Sakaleshapura",
+    "Srinivaspur",
+    "Ron",
+    "Mundargi",
+    "Sadalagi",
+    "Piriyapatna",
+    "Adyar"
+  ],
+  "Manipur": [
+    "Imphal",
+    "Thoubal",
+    "Lilong",
+    "Mayang Imphal"
+  ],
+  "Kerala": [
+    "Thiruvananthapuram",
+    "Kochi",
+    "Kozhikode",
+    "Kollam",
+    "Thrissur",
+    "Palakkad",
+    "Alappuzha",
+    "Malappuram",
+    "Ponnani",
+    "Vatakara",
+    "Kanhangad",
+    "Taliparamba",
+    "Koyilandy",
+    "Neyyattinkara",
+    "Kayamkulam",
+    "Nedumangad",
+    "Kannur",
+    "Tirur",
+    "Kottayam",
+    "Kasaragod",
+    "Kunnamkulam",
+    "Ottappalam",
+    "Thiruvalla",
+    "Thodupuzha",
+    "Chalakudy",
+    "Changanassery",
+    "Punalur",
+    "Nilambur",
+    "Cherthala",
+    "Perinthalmanna",
+    "Mattannur",
+    "Shoranur",
+    "Varkala",
+    "Paravoor",
+    "Pathanamthitta",
+    "Peringathur",
+    "Attingal",
+    "Kodungallur",
+    "Pappinisseri",
+    "Chittur-Thathamangalam",
+    "Muvattupuzha",
+    "Adoor",
+    "Mavelikkara",
+    "Mavoor",
+    "Perumbavoor",
+    "Vaikom",
+    "Palai",
+    "Panniyannur",
+    "Guruvayoor",
+    "Puthuppally",
+    "Panamattom"
+  ],
+  "Delhi": [
+    "Delhi",
+    "New Delhi"
+  ],
+  "Dadra and Nagar Haveli": [
+    "Silvassa"
+  ],
+  "Puducherry": [
+    "Pondicherry",
+    "Karaikal",
+    "Yanam",
+    "Mahe"
+  ],
+  "Uttarakhand": [
+    "Dehradun",
+    "Hardwar",
+    "Haldwani-cum-Kathgodam",
+    "Srinagar",
+    "Kashipur",
+    "Roorkee",
+    "Rudrapur",
+    "Rishikesh",
+    "Ramnagar",
+    "Pithoragarh",
+    "Manglaur",
+    "Nainital",
+    "Mussoorie",
+    "Tehri",
+    "Pauri",
+    "Nagla",
+    "Sitarganj",
+    "Bageshwar"
+  ],
+  "Uttar Pradesh": [
+    "Lucknow",
+    "Kanpur",
+    "Firozabad",
+    "Agra",
+    "Meerut",
+    "Varanasi",
+    "Allahabad",
+    "Amroha",
+    "Moradabad",
+    "Aligarh",
+    "Saharanpur",
+    "Noida",
+    "Loni",
+    "Jhansi",
+    "Shahjahanpur",
+    "Rampur",
+    "Modinagar",
+    "Hapur",
+    "Etawah",
+    "Sambhal",
+    "Orai",
+    "Bahraich",
+    "Unnao",
+    "Rae Bareli",
+    "Lakhimpur",
+    "Sitapur",
+    "Lalitpur",
+    "Pilibhit",
+    "Chandausi",
+    "Hardoi ",
+    "Azamgarh",
+    "Khair",
+    "Sultanpur",
+    "Tanda",
+    "Nagina",
+    "Shamli",
+    "Najibabad",
+    "Shikohabad",
+    "Sikandrabad",
+    "Shahabad, Hardoi",
+    "Pilkhuwa",
+    "Renukoot",
+    "Vrindavan",
+    "Ujhani",
+    "Laharpur",
+    "Tilhar",
+    "Sahaswan",
+    "Rath",
+    "Sherkot",
+    "Kalpi",
+    "Tundla",
+    "Sandila",
+    "Nanpara",
+    "Sardhana",
+    "Nehtaur",
+    "Seohara",
+    "Padrauna",
+    "Mathura",
+    "Thakurdwara",
+    "Nawabganj",
+    "Siana",
+    "Noorpur",
+    "Sikandra Rao",
+    "Puranpur",
+    "Rudauli",
+    "Thana Bhawan",
+    "Palia Kalan",
+    "Zaidpur",
+    "Nautanwa",
+    "Zamania",
+    "Shikarpur, Bulandshahr",
+    "Naugawan Sadat",
+    "Fatehpur Sikri",
+    "Shahabad, Rampur",
+    "Robertsganj",
+    "Utraula",
+    "Sadabad",
+    "Rasra",
+    "Lar",
+    "Lal Gopalganj Nindaura",
+    "Sirsaganj",
+    "Pihani",
+    "Shamsabad, Agra",
+    "Rudrapur",
+    "Soron",
+    "SUrban Agglomerationr",
+    "Samdhan",
+    "Sahjanwa",
+    "Rampur Maniharan",
+    "Sumerpur",
+    "Shahganj",
+    "Tulsipur",
+    "Tirwaganj",
+    "PurqUrban Agglomerationzi",
+    "Shamsabad, Farrukhabad",
+    "Warhapur",
+    "Powayan",
+    "Sandi",
+    "Achhnera",
+    "Naraura",
+    "Nakur",
+    "Sahaspur",
+    "Safipur",
+    "Reoti",
+    "Sikanderpur",
+    "Saidpur",
+    "Sirsi",
+    "Purwa",
+    "Parasi",
+    "Lalganj",
+    "Phulpur",
+    "Shishgarh",
+    "Sahawar",
+    "Samthar",
+    "Pukhrayan",
+    "Obra",
+    "Niwai",
+    "Mirzapur"
+  ],
+  "Bihar": [
+    "Patna",
+    "Gaya",
+    "Bhagalpur",
+    "Muzaffarpur",
+    "Darbhanga",
+    "Arrah",
+    "Begusarai",
+    "Chhapra",
+    "Katihar",
+    "Munger",
+    "Purnia",
+    "Saharsa",
+    "Sasaram",
+    "Hajipur",
+    "Dehri-on-Sone",
+    "Bettiah",
+    "Motihari",
+    "Bagaha",
+    "Siwan",
+    "Kishanganj",
+    "Jamalpur",
+    "Buxar",
+    "Jehanabad",
+    "Aurangabad",
+    "Lakhisarai",
+    "Nawada",
+    "Jamui",
+    "Sitamarhi",
+    "Araria",
+    "Gopalganj",
+    "Madhubani",
+    "Masaurhi",
+    "Samastipur",
+    "Mokameh",
+    "Supaul",
+    "Dumraon",
+    "Arwal",
+    "Forbesganj",
+    "BhabUrban Agglomeration",
+    "Narkatiaganj",
+    "Naugachhia",
+    "Madhepura",
+    "Sheikhpura",
+    "Sultanganj",
+    "Raxaul Bazar",
+    "Ramnagar",
+    "Mahnar Bazar",
+    "Warisaliganj",
+    "Revelganj",
+    "Rajgir",
+    "Sonepur",
+    "Sherghati",
+    "Sugauli",
+    "Makhdumpur",
+    "Maner",
+    "Rosera",
+    "Nokha",
+    "Piro",
+    "Rafiganj",
+    "Marhaura",
+    "Mirganj",
+    "Lalganj",
+    "Murliganj",
+    "Motipur",
+    "Manihari",
+    "Sheohar",
+    "Maharajganj",
+    "Silao",
+    "Barh",
+    "Asarganj"
+  ],
+  "Gujarat": [
+    "Ahmedabad",
+    "Surat",
+    "Vadodara",
+    "Rajkot",
+    "Bhavnagar",
+    "Jamnagar",
+    "Nadiad",
+    "Porbandar",
+    "Anand",
+    "Morvi",
+    "Mahesana",
+    "Bharuch",
+    "Vapi",
+    "Navsari",
+    "Veraval",
+    "Bhuj",
+    "Godhra",
+    "Palanpur",
+    "Valsad",
+    "Patan",
+    "Deesa",
+    "Amreli",
+    "Anjar",
+    "Dhoraji",
+    "Khambhat",
+    "Mahuva",
+    "Keshod",
+    "Wadhwan",
+    "Ankleshwar",
+    "Savarkundla",
+    "Kadi",
+    "Visnagar",
+    "Upleta",
+    "Una",
+    "Sidhpur",
+    "Unjha",
+    "Mangrol",
+    "Viramgam",
+    "Modasa",
+    "Palitana",
+    "Petlad",
+    "Kapadvanj",
+    "Sihor",
+    "Wankaner",
+    "Limbdi",
+    "Mandvi",
+    "Thangadh",
+    "Vyara",
+    "Padra",
+    "Lunawada",
+    "Rajpipla",
+    "Vapi",
+    "Umreth",
+    "Sanand",
+    "Rajula",
+    "Radhanpur",
+    "Mahemdabad",
+    "Ranavav",
+    "Tharad",
+    "Mansa",
+    "Umbergaon",
+    "Talaja",
+    "Vadnagar",
+    "Manavadar",
+    "Salaya",
+    "Vijapur",
+    "Pardi",
+    "Rapar",
+    "Songadh",
+    "Lathi",
+    "Adalaj",
+    "Chhapra",
+    "Gandhinagar"
+  ],
+  "Telangana": [
+    "Hyderabad",
+    "Warangal",
+    "Nizamabad",
+    "Karimnagar",
+    "Ramagundam",
+    "Khammam",
+    "Mahbubnagar",
+    "Mancherial",
+    "Adilabad",
+    "Suryapet",
+    "Jagtial",
+    "Miryalaguda",
+    "Nirmal",
+    "Kamareddy",
+    "Kothagudem",
+    "Bodhan",
+    "Palwancha",
+    "Mandamarri",
+    "Koratla",
+    "Sircilla",
+    "Tandur",
+    "Siddipet",
+    "Wanaparthy",
+    "Kagaznagar",
+    "Gadwal",
+    "Sangareddy",
+    "Bellampalle",
+    "Bhongir",
+    "Vikarabad",
+    "Jangaon",
+    "Bhadrachalam",
+    "Bhainsa",
+    "Farooqnagar",
+    "Medak",
+    "Narayanpet",
+    "Sadasivpet",
+    "Yellandu",
+    "Manuguru",
+    "Kyathampalle",
+    "Nagarkurnool"
+  ],
+  "Meghalaya": [
+    "Shillong",
+    "Tura",
+    "Nongstoin"
+  ],
+  "Himachal Praddesh": [
+    "Manali"
+  ],
+  "Arunachal Pradesh": [
+    "Naharlagun",
+    "Pasighat"
+  ],
+  "Maharashtra": [
+    "Mumbai",
+    "Pune",
+    "Nagpur",
+    "Thane",
+    "Nashik",
+    "Kalyan-Dombivali",
+    "Vasai-Virar",
+    "Solapur",
+    "Mira-Bhayandar",
+    "Bhiwandi",
+    "Amravati",
+    "Nanded-Waghala",
+    "Sangli",
+    "Malegaon",
+    "Akola",
+    "Latur",
+    "Dhule",
+    "Ahmednagar",
+    "Ichalkaranji",
+    "Parbhani",
+    "Panvel",
+    "Yavatmal",
+    "Achalpur",
+    "Osmanabad",
+    "Nandurbar",
+    "Satara",
+    "Wardha",
+    "Udgir",
+    "Aurangabad",
+    "Amalner",
+    "Akot",
+    "Pandharpur",
+    "Shrirampur",
+    "Parli",
+    "Washim",
+    "Ambejogai",
+    "Manmad",
+    "Ratnagiri",
+    "Uran Islampur",
+    "Pusad",
+    "Sangamner",
+    "Shirpur-Warwade",
+    "Malkapur",
+    "Wani",
+    "Lonavla",
+    "Talegaon Dabhade",
+    "Anjangaon",
+    "Umred",
+    "Palghar",
+    "Shegaon",
+    "Ozar",
+    "Phaltan",
+    "Yevla",
+    "Shahade",
+    "Vita",
+    "Umarkhed",
+    "Warora",
+    "Pachora",
+    "Tumsar",
+    "Manjlegaon",
+    "Sillod",
+    "Arvi",
+    "Nandura",
+    "Vaijapur",
+    "Wadgaon Road",
+    "Sailu",
+    "Murtijapur",
+    "Tasgaon",
+    "Mehkar",
+    "Yawal",
+    "Pulgaon",
+    "Nilanga",
+    "Wai",
+    "Umarga",
+    "Paithan",
+    "Rahuri",
+    "Nawapur",
+    "Tuljapur",
+    "Morshi",
+    "Purna",
+    "Satana",
+    "Pathri",
+    "Sinnar",
+    "Uchgaon",
+    "Uran",
+    "Pen",
+    "Karjat",
+    "Manwath",
+    "Partur",
+    "Sangole",
+    "Mangrulpir",
+    "Risod",
+    "Shirur",
+    "Savner",
+    "Sasvad",
+    "Pandharkaoda",
+    "Talode",
+    "Shrigonda",
+    "Shirdi",
+    "Raver",
+    "Mukhed",
+    "Rajura",
+    "Vadgaon Kasba",
+    "Tirora",
+    "Mahad",
+    "Lonar",
+    "Sawantwadi",
+    "Pathardi",
+    "Pauni",
+    "Ramtek",
+    "Mul",
+    "Soyagaon",
+    "Mangalvedhe",
+    "Narkhed",
+    "Shendurjana",
+    "Patur",
+    "Mhaswad",
+    "Loha",
+    "Nandgaon",
+    "Warud"
+  ],
+  "Goa": [
+    "Marmagao",
+    "Panaji",
+    "Margao",
+    "Mapusa"
+  ],
+  "West Bengal": [
+    "Kolkata",
+    "Siliguri",
+    "Asansol",
+    "Raghunathganj",
+    "Kharagpur",
+    "Naihati",
+    "English Bazar",
+    "Baharampur",
+    "Hugli-Chinsurah",
+    "Raiganj",
+    "Jalpaiguri",
+    "Santipur",
+    "Balurghat",
+    "Medinipur",
+    "Habra",
+    "Ranaghat",
+    "Bankura",
+    "Nabadwip",
+    "Darjiling",
+    "Purulia",
+    "Arambagh",
+    "Tamluk",
+    "AlipurdUrban Agglomerationr",
+    "Suri",
+    "Jhargram",
+    "Gangarampur",
+    "Rampurhat",
+    "Kalimpong",
+    "Sainthia",
+    "Taki",
+    "Murshidabad",
+    "Memari",
+    "Paschim Punropara",
+    "Tarakeswar",
+    "Sonamukhi",
+    "PandUrban Agglomeration",
+    "Mainaguri",
+    "Malda",
+    "Panchla",
+    "Raghunathpur",
+    "Mathabhanga",
+    "Monoharpur",
+    "Srirampore",
+    "Adra"
+  ]
+}
+    for state in state_names:
+        if state.lower() in addr_text.lower():
+            state_found = state
+            break
+    print("State: ",state_found)
+
+    cities = indian_cities[state_found]
+
+    for city in cities:
+        if city.lower() in addr_text.lower():
+            city_found = city
+            break
+    print("City: ",city_found)
+
+def get_address(img, address=True):
+    global four_points
+    four_points = []
+    res_string_address = None
+
+    thresh = image_processing(img, address)
+    # print("Thresh",thresh.shape)
+    img2str_config_name = "--psm 4 --oem 3"
+    res_string_address = pytesseract.image_to_string(thresh, lang='eng', config=img2str_config_name)
+    regex_address = res_string_address.replace("Address:", "")
+    regex_address = res_string_address.replace("Address :", "")
+    regex_address = os.linesep.join([s for s in res_string_address.splitlines() if s])
+    address_text = regex_address
+    # Extract information using regular expressions
+    name_pattern = re.compile(r'S/O: (\w+),')
+    street_pattern = re.compile(r'\b(\d+/\w+), (\w+), (\w+),')
+    pin_pattern = re.compile(r'\b(\d{6})\b')
+
+    # Find matches in the address text
+    name_match = name_pattern.search(address_text)
+    street_match = street_pattern.search(address_text)
+    pin_match = pin_pattern.search(address_text)
+
+    # Extracted informationA
+    name = name_match.group(1) if name_match else None
+    street = street_match.group(1) if street_match else None
+    city = street_match.group(2) if street_match else None
+    state = street_match.group(3) if street_match else None
+    pin_code = pin_match.group(1) if pin_match else None
+
+    # Print the extracted information
+    print("Name:", name)
+    print("Street:", street)
+    print("City:", city)
+    print("State:", state)
+    print("PIN Code:", pin_code)
+
+    addr = {
+        "name" : name,
+        "street" : street,
+        "city" : city,
+        "state" : state,
+        "pincode" : pin_code
+    }
+
+    return addr
 
 
 
