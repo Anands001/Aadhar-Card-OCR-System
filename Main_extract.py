@@ -1,19 +1,14 @@
 import json
 import pytesseract
 import cv2
-import numpy as np
-import sys
-import re
 import os
-from PIL import Image
 import ftfy
 from flask import Flask, request, jsonify
 import pan_read
-
-'''module which we made to read the text of the document'''
 import aadhaar_read
 import easy_extract
 import io
+import Dbmongo.connect_database as db
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -66,30 +61,30 @@ def main():
 
         text = ftfy.fix_text(text)
         text = ftfy.fix_encoding(text)
-        print(text)
+        # print(text)
         if "income" in text.lower() or "tax" in text.lower() or "department" in text.lower():
             data = pan_read.pan_read_data(text)
         elif "male" in text.lower():
-            data = aadhaar_read.adhaar_read_data(text)
+            data = aadhaar_read.adhaar_read_data(text,img)
         else:
-            data = aadhaar_read.adhaar_read_data(text)
+            data = aadhaar_read.adhaar_read_data(text,img)
         print("Data : ",data)
-        # if all(data[key] is not None for key in data):
-        #     pass
-        # else:
-            # print("-------------Easy Ocr-------------------")
-            # text = easy_extract.easy_read(filename)
-            # # print(text)
-            # text_output = open('output.txt', 'w', encoding='utf-8')
-            # text_output.write(text)
-            # text_output.close()
-            #
-            # file = open('output.txt', 'r', encoding='utf-8')
-            # text = file.read()
-            #
-            # text = ftfy.fix_text(text)
-            # text = ftfy.fix_encoding(text)
-            # data = aadhaar_read.adhaar_read_data(text)
+        if all(data[key] is not None for key in data):
+            pass
+        else:
+            print("-------------Easy Ocr-------------------")
+            text = easy_extract.easy_read(filename)
+            # print(text)
+            text_output = open('output.txt', 'w', encoding='utf-8')
+            text_output.write(text)
+            text_output.close()
+
+            file = open('output.txt', 'r', encoding='utf-8')
+            text = file.read()
+
+            text = ftfy.fix_text(text)
+            text = ftfy.fix_encoding(text)
+            data = aadhaar_read.adhaar_read_data(text,img)
             # print("Text: ", text)
 
         print("Data :", data)
@@ -98,12 +93,17 @@ def main():
         except NameError:
             to_unicode = str
         with io.open('info.json', 'w', encoding='utf-8') as outfile:
-            data = json.dumps(data, indent=4, sort_keys=True, separators=(',', ': '), ensure_ascii=False)
+            data = json.dumps(data, indent=4, sort_keys=True, separators=(',', ': '), ensure_ascii=False,default=str)
             outfile.write(to_unicode(data))
 
         with open('info.json', encoding='utf-8') as data:
             data_loaded = json.load(data)
+
+        db.store_aadhar_info(data_loaded)
         print(data_loaded)
+        data_loaded["_id"] = str(data_loaded["_id"])
+
+
 
         if data_loaded['ID Type'] == 'PAN':
             print("\n---------- PAN Details ----------")
