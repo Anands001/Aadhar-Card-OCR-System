@@ -1,10 +1,7 @@
 import re
-import langid
+
 from rapidfuzz import fuzz
 
-import re
-
-import spacy
 
 def extract_and_clean_names(text):
     """

@@ -1,6 +1,7 @@
-from cassandra.cluster import Cluster
-from cassandra.auth import PlainTextAuthProvider
 import json
+
+from cassandra.auth import PlainTextAuthProvider
+from cassandra.cluster import Cluster
 
 
 class DB:

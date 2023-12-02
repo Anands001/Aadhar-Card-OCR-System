@@ -1,8 +1,10 @@
 import os
-from cpython cimport *
-from interface cimport *
-from cpython.version cimport PY_MAJOR_VERSION
 
+from cpython cimport *
+from cpython.version cimport
+
+PY_MAJOR_VERSION
+from interface cimport *
 
 TESSDATA_POSSIBLE_PATHS = [
     "/usr/local/share/tessdata",

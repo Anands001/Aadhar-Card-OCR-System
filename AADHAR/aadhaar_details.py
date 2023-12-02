@@ -1,9 +1,13 @@
+import json
+import os
+import re
+import time
+from pathlib import Path
+
 import cv2
-import spacy
 import numpy as np
 import pytesseract
-import re, os, time, json
-from pathlib import Path
+import spacy
 
 four_points = []
 

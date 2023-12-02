@@ -1,14 +1,16 @@
+import io
 import json
-import pytesseract
-import cv2
 import os
+
+import cv2
 import ftfy
+import pytesseract
 from flask import Flask, request, jsonify
-import pan_read
+
+import Dbmongo.connect_database as db
 import aadhaar_read
 import easy_extract
-import io
-import Dbmongo.connect_database as db
+import pan_read
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'

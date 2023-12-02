@@ -1,7 +1,14 @@
 {
-    "Adhaar Number": "3381 5746 7382",
-    "Date of Birth": "10/10/2020",
+    "Address": {
+        "S/O": "Saifudeen",
+        "addr": "Address: S/O: Saifudeen, 8/10A, KA MAMANANDAL, Kallakkurichi, Villupuram  Tamil Nadu,",
+        "district": "Viluppuram",
+        "pincode": "606202",
+        "state": "Tamil Nadu"
+    },
+    "Adhaar Number": "8176 7259 2634",
+    "Date of Birth": "10/11/2002",
     "ID Type": "Adhaar",
-    "Name": "",
+    "Name": "Kaja Mohyaddeen",
     "Sex": "MALE"
 }

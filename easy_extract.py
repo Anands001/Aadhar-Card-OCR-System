@@ -1,8 +1,9 @@
-import easyocr
 import cv2
+import easyocr
 
 # Replace 'en' with the language code of the text in your image
 reader = easyocr.Reader(['en'])
+
 
 def easy_read(path):
     # Replace 'your_image_path.jpg' with the path to your image file
@@ -18,7 +19,7 @@ def easy_read(path):
     result_string = ''
     for detection in results:
         print(detection[1])
-        result_string = result_string +' '+ ''.join(detection[1])
+        result_string = result_string + ' ' + ''.join(detection[1])
         # return detection[1]
         # print(detection[1])
 

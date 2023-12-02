@@ -1,7 +1,9 @@
+from pathlib import Path
+
 import cv2
 import pytesseract
-from aadhaar_details import get_values,get_address,send_to_json
-from pathlib import Path
+
+from aadhaar_details import get_values, get_address, send_to_json
 
 if __name__ == "__main__":
     tesseract_path = Path(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
