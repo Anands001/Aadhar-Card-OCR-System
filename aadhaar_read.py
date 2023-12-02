@@ -30,12 +30,16 @@ def extract_and_clean_names(text):
 
     # Extract names using regex
     text = ''.join(text)
+    print('text: ',text)
     address_position = text.find("address".lower())
     name_text = text[:address_position].strip()
+    print('name text',name_text)
     name_pattern = re.compile(r'\b[A-Z][a-z]* [A-Z][a-z]*\b')
+    # name_pattern = re.compile(r'\b[A-Z][a-z]*([A-Z][a-z]*)?\b')
     matches = name_pattern.findall(name_text)
+    print('matches:',matches)
     names = [match.strip() for match in matches]
-
+    print('names: ',names)
     # Clean and modify names
     for i in range(len(names)):
         names[i] = names[i].rstrip()
@@ -50,10 +54,10 @@ def extract_and_clean_names(text):
 
     # Filter out names containing common strings
     cleaned_names = [name for name in names if not any(common_str.lower() in name.lower() for common_str in common_strings)]
-
+    print('cleaned names: ',cleaned_names)
     # Check if there are cleaned names to process
     if not cleaned_names:
-        return "No valid names found in the input text."
+        return None
 
     # Join cleaned names into a single string
     full_name = ''.join(cleaned_names)
@@ -161,19 +165,22 @@ def adhaar_read_data(text,img):
         #     print("Aadhar number not read")
         adh_pattern = re.compile(r'\d\d\d\d \d\d\d\d \d\d\d\d')
         adh = adh_pattern.search(text).group(0)
-
-        if(text.find("address".lower()) ):
+        address = ''
+        if(text.find("address".lower())!= -1 ):
             # print("Address : ",get_address(img,True))
-            print("Address dict : ",get_address1(text))
+            address = get_address1(text)
+            print("Address dict : ",address)
     except Exception as e:
         print("Exception oocured while extracting: ",e)
 
     data = {}
+    data['ID Type'] = "Adhaar"
     data['Name'] = name
     data['Date of Birth'] = dob
     data['Adhaar Number'] = adh
     data['Sex'] = sex
-    data['ID Type'] = "Adhaar"
+    if(address != ''):
+        data['Address'] = address
     return data
 
 
@@ -1509,10 +1516,7 @@ def get_address1(text):
         print("Final City: ", city_found)
     else:
         print("State not found in the address.")
-    address = {
-        "state" : state_found,
-        "district" : city_found
-    }
+
     # Use regular expressions to extract pin code, name, and additional details
     pin_pattern = re.compile(r'\b(\d{6})\b')
     name_pattern = re.compile(r'S/O: (\w+),')
@@ -1531,7 +1535,17 @@ def get_address1(text):
     print("PIN Code:", pincode_found)
     print("Name:", name_found)
     print("Additional Details:", additional_details_found)
-
+    pincode_index = addr_text.lower().find(pincode_found)
+    print('pincode_index: ',pincode_index)
+    addr = addr_text[:pincode_index].strip()
+    addr = addr.replace('\n',' ')
+    address = {
+        "S/O": name_found,
+        "state": state_found,
+        "district": city_found,
+        "pincode" : pincode_found,
+        "addr" : addr
+    }
     return address
 
 def get_address(img, address=True):
