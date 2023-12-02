@@ -13,7 +13,7 @@ def store_aadhar_info(aadhar_data):
 
         # Store Aadhar information in MongoDB
         result = collection.insert_one(aadhar_data)
-        display()
+        # display()
         return {"success": True, "message": "Aadhar information stored successfully",
                 "inserted_id": str(result.inserted_id)}
 
