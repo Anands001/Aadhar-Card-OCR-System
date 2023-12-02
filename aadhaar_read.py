@@ -165,8 +165,9 @@ def adhaar_read_data(text,img):
         #     print("Aadhar number not read")
         adh_pattern = re.compile(r'\d\d\d\d \d\d\d\d \d\d\d\d')
         adh = adh_pattern.search(text).group(0)
-        address = ''
-        if(text.find("address".lower())!= -1 ):
+        address = None
+        # print(text.find("address".lower()) != )
+        if(text.lower().find("address".lower())!= -1 ):
             # print("Address : ",get_address(img,True))
             address = get_address1(text)
             print("Address dict : ",address)
@@ -179,7 +180,7 @@ def adhaar_read_data(text,img):
     data['Date of Birth'] = dob
     data['Adhaar Number'] = adh
     data['Sex'] = sex
-    if(address != ''):
+    if(address != None):
         data['Address'] = address
     return data
 
