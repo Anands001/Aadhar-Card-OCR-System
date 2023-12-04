@@ -1,7 +1,0 @@
-{
-  "name": "Project",
-  "version": "1.0.0",
-  "dependencies": {
-    "@mobiscroll/react": "npm:@mobiscroll/react-trial@^5.28.0"
-  }
-}
