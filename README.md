@@ -1,7 +1,3 @@
-Certainly! Below is a template for the README.md file for your GitHub project:
-
----
-
 # Aadhar Card OCR System
 
 ## Overview
