@@ -52,7 +52,7 @@ npm start
 ```
 
 This will start the development server for the UI, allowing you to access it in your web browser.
-```
+
 
 ## Contributing
 
