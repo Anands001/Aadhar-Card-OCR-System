@@ -58,11 +58,6 @@ This will start the development server for the UI, allowing you to access it in 
 
 Contributions are welcome! Feel free to submit pull requests or raise issues for any improvements or bug fixes.
 
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
----
 # Data flow
 
 ![image](https://github.com/Anands001/OCR-Project/assets/110816114/0b329a29-674e-409e-b557-4387729be740)
@@ -70,3 +65,8 @@ This project is licensed under the [MIT License](LICENSE).
 # Project Demo Images
 ![image](https://github.com/Anands001/OCR-Project/assets/110816114/67a9e15f-2673-436c-9b08-8fcb8b67151c)
 
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
