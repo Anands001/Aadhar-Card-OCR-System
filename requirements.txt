@@ -4,3 +4,4 @@ opencv-python==4.5.5.64
 pytesseract==0.3.8
 ftfy==6.0.1
 pymongo==4.1.1
+numpy<2.0
