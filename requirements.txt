@@ -11,3 +11,4 @@ easyocr~=1.7.1
 ftfy~=6.1.1
 flask~=3.0.0
 setuptools~=65.5.1
+gunicorn
