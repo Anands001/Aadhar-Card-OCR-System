@@ -1,4 +1,4 @@
-Flask==2.2.3
+Flask==2.0.3
 Flask-Cors==3.0.10
 opencv-python==4.5.5.64
 pytesseract==0.3.8
