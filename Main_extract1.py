@@ -26,7 +26,12 @@ def main():
         if file.filename == '':
             return jsonify({'error': 'No selected file'}), 400
 
-        pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Update this path if needed
+        # Set Tesseract path based on environment
+        if os.name == 'nt':  # Windows environment (local machine)
+            pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+        else:  # Linux environment (Render or any other cloud service)
+            pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'        
+        app.config['UPLOAD_FOLDER'] = '/tmp'
         path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(path)
 
